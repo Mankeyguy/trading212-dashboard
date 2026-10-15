@@ -75,19 +75,32 @@ export class T212Client implements Fetcher {
       }
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        throw new T212ApiError(res.status, describeError(res.status, body));
+        throw new T212ApiError(res.status, describeError(res.status, body, path));
       }
       return (await res.json()) as T;
     }
   }
 }
 
-function describeError(status: number, body: string): string {
+// Which API key permission each endpoint needs (names as shown in Trading 212 → Settings → API).
+const SCOPES: { match: RegExp; scope: string; section: string }[] = [
+  { match: /^\/equity\/account/, scope: 'account', section: 'Přehled' },
+  { match: /^\/equity\/positions/, scope: 'portfolio', section: 'Přehled a Pozice' },
+  { match: /^\/equity\/history\/orders/, scope: 'history:orders', section: 'Objednávky' },
+  { match: /^\/equity\/history\/dividends/, scope: 'history:dividends', section: 'Dividendy' },
+  { match: /^\/equity\/history\/transactions/, scope: 'history:transactions', section: 'Vklady a výběry' },
+  { match: /^\/equity\/pies/, scope: 'pies:read', section: 'Pies' },
+];
+
+function describeError(status: number, body: string, path: string): string {
+  const scope = SCOPES.find((s) => s.match.test(path));
   switch (status) {
     case 401:
       return 'Neplatný API klíč (401). Zkontroluj T212_API_KEY / T212_API_SECRET.';
     case 403:
-      return 'API klíč nemá potřebné oprávnění (scope) pro tento endpoint (403).';
+      return scope
+        ? `API klíč nemá oprávnění „${scope.scope}“ (potřebné pro: ${scope.section}). Vytvoř nový klíč s tímto oprávněním (403).`
+        : `API klíč nemá potřebné oprávnění pro ${path} (403).`;
     case 429:
       return 'Překročen rate limit Trading 212 (429), zkus to za chvíli.';
     default:
