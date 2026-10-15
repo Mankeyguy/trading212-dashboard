@@ -16,6 +16,7 @@ import { OrdersTab } from './components/OrdersTab';
 import { OverviewTab } from './components/OverviewTab';
 import { PiesTab } from './components/PiesTab';
 import { PositionsTab } from './components/PositionsTab';
+import { TaxTab } from './components/TaxTab';
 import { TransactionsTab } from './components/TransactionsTab';
 import { Alert } from './components/ui';
 
@@ -26,6 +27,7 @@ const TABS = [
   { id: 'transactions', label: 'Vklady a výběry' },
   { id: 'orders', label: 'Objednávky' },
   { id: 'pies', label: 'Pies' },
+  { id: 'tax', label: 'Daně' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
 
@@ -127,6 +129,7 @@ export function App() {
       {tab === 'transactions' && <TransactionsTab currency={currency} history={transactions} />}
       {tab === 'orders' && <OrdersTab currency={currency} history={orders} />}
       {tab === 'pies' && <PiesTab currency={currency} pies={pies} positions={positions.data ?? []} />}
+      {tab === 'tax' && <TaxTab currency={currency} orders={orders} positions={positions.data ?? []} />}
     </div>
   );
 }

@@ -10,6 +10,7 @@ Lokální finanční dashboard nad [Trading 212 Public API](https://docs.trading
 | **Vklady a výběry** | vklady, výběry, poplatky po měsících + seznam | `/equity/history/transactions` |
 | **Objednávky** | historie obchodů, filtry, poplatky, realizovaný zisk | `/equity/history/orders` |
 | **Pies** | výsledek, cíl, složení (cíl vs. skutečnost) | `/equity/pies`, `/equity/pies/{id}` |
+| **Daně** | časový test (3 roky) po instrumentech i nákupech, kalendář uvolňování, hodnotový test 100 000 Kč, odhad daně, prodeje podle let | `/equity/history/orders` + `/equity/positions` |
 
 ## Jak to funguje
 
@@ -65,6 +66,17 @@ Smazáním složky `data/` (nebo tlačítkem *Synchronizovat*) vynutíš nové s
 - API neposkytuje historický vývoj hodnoty portfolia, proto graf ukazuje kumulativní vklady proti dnešní hodnotě.
 - Pies API je Trading 212 označené jako *deprecated*. Pokud ho vypnou, záložka Pies přestane fungovat, zbytek dashboardu ne.
 
+## Daňová analýza
+
+Orientační výpočet podle českých pravidel, **nejde o daňové poradenství**:
+
+- **Časový test:** prodej je osvobozený, pokud doba držení **přesáhne 3 roky**. Kusy jsou tedy bez daně až ode dne po třetím výročí nákupu.
+- **Hodnotový test (od 2025):** osvobozeno, pokud hrubé příjmy z prodejů cenných papírů za rok nepřesáhnou 100 000 Kč. Počítá se za všechny brokery, dashboard vidí jen Trading 212.
+- **Párování FIFO:** prodeje se odečítají od nejstarších nákupů daného instrumentu.
+- Nákupní cena i příjem z prodeje se berou z `walletImpact.netValue` (v měně účtu, CZK).
+- Pokud počet kusů z historie nesedí s aktuální pozicí (typicky split), kusy se přepočtou poměrem a instrument je označený ⚠.
+- Odhad daně: 15 % ze zisku. Neřeší 23% sazbu nad limitem, ostatní příjmy podle § 10 ani nákupy mimo Trading 212.
+
 ## Struktura
 
 ```
@@ -73,5 +85,6 @@ server/t212.ts         klient Trading 212 (auth, rate limit, retry na 429)
 server/historySync.ts  inkrementální stahování historie do data/
 server/mock.ts         falešné API pro T212_MOCK=1
 shared/types.ts        typy odpovědí API
+src/tax.ts             daňová analýza (FIFO, časový a hodnotový test)
 src/                   React frontend (Recharts)
 ```
